@@ -1,0 +1,28 @@
+module test_bench;
+reg clk;
+reg reset;
+wire i2c_sda;
+wire i2c_scl;
+
+project_2 uut (
+.clk(clk),
+.reset(reset),
+.i2c_sda(i2c_sda),
+.i2c_scl(i2c_scl)
+);
+
+initial begin
+clk=0;
+forever begin
+#5 clk= ~clk;
+end
+end
+
+initial begin
+reset = 1;
+#10;
+reset=0;
+#100;
+$finish;
+end
+endmodule
