@@ -1,0 +1,104 @@
+timescale 1ns / 1ps
+module project_2(
+input wire clk,
+input wire reset,
+output reg i2c_sda,
+output wire i2c_scl,
+output reg [7:0] out_data
+);
+
+localparam state_idle = 0;
+localparam state_start = 1;
+localparam state_addr = 2;
+localparam state_rw =3;
+localparam state_ack=4;
+localparam state_data=5;
+localparam state_ack2=6;
+localparam state_stop=7;
+
+reg [7:0] state;
+reg [6:0] addr;
+reg [7:0] count;
+reg [7:0] data;
+reg i2c_scl_2=0;
+
+assign i2c_scl = (i2c_scl_2 == 0) ? 1 : ~clk;
+
+always@(negedge clk) begin
+if (reset==1) begin
+i2c_scl_2&lt;=0;
+end
+
+else begin
+if ((state==state_idle) || (state==state_start) || (state==state_stop)) begin
+i2c_scl_2&lt;=0;
+end
+else begin
+i2c_scl_2&lt;=1;
+end
+end
+end
+
+always@(posedge clk) begin
+if (reset==1) begin
+state&lt;=0;
+i2c_sda &lt;=1;
+addr &lt;=7&#39;h50;
+count &lt;=8&#39;d0;
+data &lt;=8&#39;haa;
+end
+
+else begin
+
+case(state)
+state_idle :begin
+i2c_sda&lt;=1;
+state &lt;= state_start;
+end
+
+state_start : begin
+i2c_sda &lt;=0;
+state &lt;= state_addr;
+count &lt;=6;
+end
+
+state_addr: begin
+i2c_sda&lt;= addr[count];
+if (count==0) state&lt;= state_rw;
+else count &lt;= count-1;
+end
+
+state_rw: begin
+i2c_sda &lt;=1;
+state &lt;= state_ack;
+end
+
+state_ack: begin
+i2c_sda&lt;=0;
+state &lt;= state_data;
+count &lt;= 7;
+end
+
+state_data: begin
+i2c_sda&lt;= data[count];
+if (count==0) state&lt;= state_ack2;
+else count&lt;= count-1;
+end
+
+state_ack2: begin
+state&lt;= state_stop;
+end
+
+state_stop: begin
+i2c_sda &lt;=1;
+state&lt;= state_idle;
+end
+endcase
+end
+end
+
+always @(negedge clk) begin
+out_data=data;
+end
+
+endmodule
